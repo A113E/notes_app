@@ -2,21 +2,6 @@ const express = require('express') // Importa el modulo express para crear el se
 const app = express() // Llama a la función express
 const cors = require('cors') // Libreria para las solicitudes de origen cruzadas
 
-app.use(express.json()) // Acceder al json parse
-app.use(cors()) // Acceder a cors
-app.use(express.static('dist')) // Para llamar contenido estatico
-
-// Middleware que imprime cada solicitud que se hace al servidor
-const solicitudesInfo = (request, response, next) => {
-    console.log('Method:', request.method)
-    console.log('Path:', request.path)
-    console.log('Body:', request.body)
-    console.log('---')
-    next()
-}
-
-app.use(solicitudesInfo)
-
 let notas = [
     {
       id: 1,
@@ -39,6 +24,20 @@ let notas = [
       importante: true
     }
 ]
+
+// Middleware que imprime cada solicitud que se hace al servidor
+const solicitudesInfo = (request, response, next) => {
+    console.log('Method:', request.method)
+    console.log('Path:', request.path)
+    console.log('Body:', request.body)
+    console.log('---')
+    next()
+}
+
+app.use(solicitudesInfo)
+app.use(express.static('dist')) // Para llamar contenido estatico
+app.use(express.json()) // Acceder al json parse
+app.use(cors()) // Acceder a cors
 
 // Ruta para obtener las notas
 app.get('/api/notas', (request, response) => {
