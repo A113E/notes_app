@@ -4,6 +4,7 @@ const cors = require('cors') // Libreria para las solicitudes de origen cruzadas
 
 app.use(express.json()) // Acceder al json parse
 app.use(cors()) // Acceder a cors
+app.use(express.static('dist')) // Para llamar contenido estatico
 
 // Middleware que imprime cada solicitud que se hace al servidor
 const solicitudesInfo = (request, response, next) => {
