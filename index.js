@@ -1,7 +1,9 @@
 const express = require('express') // Importa el modulo express para crear el servidor
 const app = express() // Llama a la función express
+const cors = require('cors') // Libreria para las solicitudes de origen cruzadas
 
 app.use(express.json()) // Acceder al json parse
+app.use(cors()) // Acceder a cors
 
 // Middleware que imprime cada solicitud que se hace al servidor
 const solicitudesInfo = (request, response, next) => {
@@ -83,7 +85,7 @@ app.post('/api/notas', (request, response) => {
     const body = request.body
 
     if (!body) {
-        return response.status(400).json({ 'Falta el contenido de la nota' })
+        return response.status(400).json({ error: 'Falta el contenido de la nota' })
     }
     console.log(body)
 
@@ -105,6 +107,6 @@ const rutasInexistentes = (request, response) => {
 
 app.use(rutasInexistentes)
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT)
 console.log(`Server running on port ${PORT}`)
