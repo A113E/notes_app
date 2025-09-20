@@ -51,31 +51,34 @@ app.delete('/api/notas/:id', (request, response, next) => {
 
 // Ruta para crear una nota
 app.post('/api/notas', (request, response, next) => {
-    const body = request.body
+  const body = request.body
 
-    if (!body) {
-        return response.status(400).json({ error: 'Falta el contenido de la nota' })
-    }
-    console.log(body)
-
-    // Verificar si la nota existe
-    Nota.findOne({ contenido: body.contenido })
+  if (!body) {
+    return response.status(400).json({ error: 'Falta el contenido de la nota' })
+  }
+ 
+  // Verifica si la nota existe
+  Nota.findOne({ contenido: body.contenido })
     .then(notaExiste => {
-        if (notaExiste) {
-            return response.status(400).json({ error: 'La nota ya existe' })
-        }
-    })
+      if (notaExiste) {
+        return response.status(400).json({ error: 'La nota ya existe' })
+      }
 
-    const nota = new Nota ({
+      const nota = new Nota({
         contenido: body.contenido,
         importante: body.importante || false
-    })
+      })
 
-    nota.save().then(notaGuardada => {
+      return nota.save()
+    })
+    .then(notaGuardada => {
+      if (notaGuardada) {
         response.json(notaGuardada)
+      }
     })
     .catch(error => next(error))
 })
+
 
 // Ruta para cambiar la importancia de una nota
 app.put('/api/notas/:id', (request, response, next) => {
