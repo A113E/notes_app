@@ -1,29 +1,8 @@
+require('dotenv').config() // Para llamar a la variable de entorno
 const express = require('express') // Importa el modulo express para crear el servidor
 const app = express() // Llama a la función express
 const cors = require('cors') // Libreria para las solicitudes de origen cruzadas
-
-let notas = [
-    {
-      id: 1,
-      contenido: "HTML is easy",
-      importante: true
-    },
-    {
-      id: 2,
-      contenido: "Browser can execute only JavaScript",
-      importante: false
-    },
-    {
-      id: 3,
-      contenido: "GET and POST are the most important methods of HTTP protocol",
-      importante: true
-    },
-    {
-      id: 4,
-      contenido: "Nota de prueba",
-      importante: true
-    }
-]
+const Nota = require('./models/nota') // Modelo Nota
 
 // Middleware que imprime cada solicitud que se hace al servidor
 const solicitudesInfo = (request, response, next) => {
@@ -41,47 +20,37 @@ app.use(cors()) // Acceder a cors
 
 // Ruta para obtener las notas
 app.get('/api/notas', (request, response) => {
-    response.json(notas)
+    Nota.find({}).then(notas => {
+        response.json(notas)
+    })
 })
 
 // Ruta para obtener una sola nota por id
-app.get('/api/notas/:id', (request, response) => {
-    const id = Number(request.params.id)
-    console.log(id)
-    const nota = notas.find(nota => nota.id === id)
-    console.log(nota)
-    
-    if (nota) {
-        response.json(nota)
-    } else {
-        response.status(404).end()
-    }
+app.get('/api/notas/:id', (request, response, next) => {
+    Nota.findById(request.params.id).then(nota => {
+        if (nota) {
+            response.json(nota)
+        } else {
+            response.status(404).json({ error: 'Nota no encontrada' })
+        }
+    })
+    .catch(error => next(error))
 })
 
 // Ruta para eliminar una nota por id
-app.delete('/api/notas/:id', (request, response) => {
-    const id = Number(request.params.id)
-    console.log(id)
-
-    if (!id) {
-        response.status(404).end()
-    }
-
-    notas = notas.filter(nota => nota.id !== id) // Verifica que la nota ya no está
-    response.status(204).end()
+app.delete('/api/notas/:id', (request, response, next) => {
+    Nota.findByIdAndDelete(request.params.id).then(nota => {
+        if (nota) {
+        response.status(204).end()  // Eliminada
+      } else {
+        response.status(404).json({ error: 'Nota no encontrada' })
+      }
+    })
+    .catch(error => next(error))
 })
 
-// Función para generar un Id por orden
-const generarId = () => {
-    const maxId = notas.length > 0
-    ? Math.max(...notas.map(n => n.id))
-    : 0
-
-    return maxId + 1
-}
-
 // Ruta para crear una nota
-app.post('/api/notas', (request, response) => {
+app.post('/api/notas', (request, response, next) => {
     const body = request.body
 
     if (!body) {
@@ -89,15 +58,38 @@ app.post('/api/notas', (request, response) => {
     }
     console.log(body)
 
-    const nota = {
+    // Verificar si la nota existe
+    Nota.findOne({ contenido: body.contenido })
+    .then(notaExiste => {
+        if (notaExiste) {
+            return response.status(400).json({ error: 'La nota ya existe' })
+        }
+    })
+
+    const nota = new Nota ({
         contenido: body.contenido,
-        importante: Boolean(body.importante) || false,
-        id: generarId()
-    }
+        importante: body.importante || false
+    })
 
-    notas = notas.concat(nota)
+    nota.save().then(notaGuardada => {
+        response.json(notaGuardada)
+    })
+    .catch(error => next(error))
+})
 
-    response.json(nota)
+// Ruta para cambiar la importancia de una nota
+app.put('/api/notas/:id', (request, response, next) => {
+    const { contenido, importante } = request.body
+
+    Nota.findByIdAndUpdate(
+        request.params.id, 
+        {contenido, importante},
+        {new: true, runValidators: true, context: 'query'}
+    )
+    .then(notaCambiada => {
+        response.json(notaCambiada)
+    })
+    .catch(error => next(error))
 })
 
 // Middleware que captura solicitudes a rutas inexistentes
@@ -107,6 +99,7 @@ const rutasInexistentes = (request, response) => {
 
 app.use(rutasInexistentes)
 
-const PORT = process.env.PORT || 3001
-app.listen(PORT)
-console.log(`Server running on port ${PORT}`)
+const PORT = process.env.PORT
+app.listen(PORT, () => {
+  console.log(`Server ejecutándose en el puerto ${PORT}`)
+})
