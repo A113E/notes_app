@@ -1,0 +1,10 @@
+const Footer = () => {
+    return (
+        <div className="footerDiv">
+            <br />
+            <em>Note app, Department of Computer Science, University of Helsinki 2025</em>
+        </div>
+    )
+}
+
+export default Footer
